@@ -29,6 +29,38 @@
 	(DIVEXACT_BY3_METHOD): Don't default to 0 if
 	HAVE_NATIVE_mpn_divexact_by3c.
 
+2008-09-18  Niels Möller  <nisse@lysator.liu.se>
+
+	* mpn/generic/gcd.c (main): Added code for tuning of CHOOSE_P.
+
+	* mpn/generic/hgcd.c (mpn_hgcd_matrix_mul): Assert that inputs are
+	normalized.
+
+2008-09-17  Niels Möller <nisse@lysator.liu.se>  <nisse@king.swox.se>
+
+	* mpn/generic/gcdext.c (mpn_gcdext): p = n/5 caused a
+	slowdown for large inputs. As a compromise, use p = n/2 for the
+	first iteration, and p = n/3 for the rest. Handle the first
+	iteration specially, since the initial u0 and u1 are trivial.
+
+	* mpn/x86_64/gmp-mparam.h (GCDEXT_DC_THRESHOLD): Reduced threshold
+	from 409 to 390.
+
+	* mpn/generic/gcdext.c (CHOOSE_P): New macro. Use p = n/5.
+	(mpn_gcdext): Use CHOOSE_P, and generalized the calculation of
+	scratch space.
+
+	* tune/tuneup.c (tune_hgcd): Use default step factor.
+
+	* mpn/x86_64/gmp-mparam.h: (GCD_DC_THRESHOLD): Reduced from 493 to
+	412.
+
+	* mpn/generic/gcd.c (CHOOSE_P): New macro, to determine the
+	split when calling hgcd. Use p = 2n/3, as that seems better than
+	the more obvious split p = n/2.
+	(mpn_gcd): Use CHOOSE_P, and generalized the calculation of
+	scratch space.
+
 2008-09-16  Torbjorn Granlund  <tege@swox.com>
 
 	* mpn/generic/toom_interpolate_7pts.c: Use new mpn_divexact_byN
@@ -55,13 +87,174 @@
 	Choose function depending on DIVEXACT_BY3_METHOD.
 	* gmp-impl.h (DIVEXACT_BY3_METHOD): Provide default.
 
+2008-09-16  Niels Möller  <nisse@lysator.liu.se>
+
+	* mpn/generic/hgcd.c (mpn_hgcd_addmul2_n): Moved function to
+	gcdext.c, where it is used.
+	* mpn/generic/gcdext.c (addmul2_n): Moved and renamed, was
+	mpn_hgcd_addmul2_n. Made static. Deleted input normalization.
+	Deleted rn argument.
+	(mpn_gcdext): Updated calls to addmul2_n, and added assertions.
+
+	* gmp-impl.h (MPN_HGCD_MATRIX_INIT_ITCH): Increased storage by four limbs.
+	(MPN_HGCD_LEHMER_ITCH): Reduced storage by one limb.
+	(MPN_GCD_SUBDIV_STEP_ITCH): Likewise.
+	(MPN_GCD_LEHMER_N_ITCH): Likewise.
+
+	* mpn/generic/hgcd.c (mpn_hgcd_matrix_init): Use two extra limbs.
+	(hgcd_step): Use overlapping arguments to mpn_tdiv_qr.
+	(mpn_hgcd_matrix_mul): Deleted normalization code. Tigher bounds
+	for the element size of the product. Needs two extra limbs of
+	storage for the elements.
+	(mpn_hgcd_itch): Updated storage calculation.
+
+	* mpn/generic/gcd_subdiv_step.c (mpn_gcd_subdiv_step): Use
+	overlapping arguments to mpn_tdiv_qr. Use mpn_zero_p.
+
+	* mpn/generic/gcd.c (mpn_gcd): Use mpn_zero_p.
+
+2008-09-15  Niels Möller  <nisse@lysator.liu.se>
+
+	* mpn/generic/hgcd.c (mpn_hgcd_matrix_init): Updated for deleted
+	tp pointer.
+	(hgcd_matrix_update_q): Likewise.
+	(mpn_hgcd_matrix_mul): Likewise.
+	(mpn_hgcd_itch): Updated calculation of scratch space.
+
+	* gmp-impl.h (struct hgcd_matrix): Deleted tp pointer.
+	(MPN_HGCD_MATRIX_INIT_ITCH): Reduced storage.
+	(mpn_hgcd_step, MPN_HGCD_STEP_ITCH): Deleted declarations.
+
+2008-09-15  Niels Möller <nisse@lysator.liu.se>  <nisse@king.swox.se>
+
+	* mpn/x86_64/gmp-mparam.h (MATRIX22_STRASSEN_THRESHOLD): New
+	threshold.
+
+	* mpn/generic/hgcd.c (mpn_hgcd_matrix_mul): Use mpn_matrix22_mul.
+	(mpn_hgcd_itch): Updated calculation of scratch space. Use
+	count_leading_zeros to get the recursion depth.
+
+	* mpn/generic/gcd.c (mpn_gcd): Fixed calculation of scratch space,
+	and use mpn_hgcd_itch.
+
+2008-09-15  Niels Möller  <nisse@lysator.liu.se>
+
+	* tune/tuneup.c (tune_matrix22_mul): New function.
+	(all): Use it.
+
+	* tune/common.c (speed_mpn_matrix22_mul): New function.
+
+	* tune/Makefile.am (TUNE_MPN_SRCS_BASIC): Added matrix22_mul.c.
+
+	* tests/mpn/t-matrix22.c: Use MATRIX22_STRASSEN_THRESHOLD to
+	select sizes for tests.
+
+	* gmp-impl.h (MATRIX22_STRASSEN_THRESHOLD): New threshold
+
+	* configure.in (gmp_mpn_functions): Added matrix22_mul.
+	* gmp-impl.h: Added declarations for mpn_matrix22_mul and related
+	functions.
+
+	* mpn/Makefile.am (nodist_EXTRA_libmpn_la_SOURCES): Added
+	matrix22_mul.c.
+	* tests/mpn/Makefile.am (check_PROGRAMS): Added t-matrix22.
+
+	* tests/mpn/t-matrix22.c: New file.
+	* mpn/generic/matrix22_mul.c: New file.
+
+2008-09-11  Niels Möller  <nisse@king.swox.se>
+
+	* tune/tuneup.c: Updated tuning of gcdext.
+
+	* mpn/x86_64/gmp-mparam.h (GCDEXT_DC_THRESHOLD): Reduced threshold
+	from 713 to 409.
+
+2008-09-11  Niels Möller  <nisse@lysator.liu.se>
+
+	* gmp-impl.h: Updated for gcdext changes.
+	(GCDEXT_DC_THRESHOLD): New constant, renamed from
+	GCDEXT_SCHOENHAGE_THRESHOLD.
+
+	* mpn/generic/gcdext.c (compute_v): Accept non-normalized a and b
+	as inputs.
+	(mpn_gcdext): Rewrote and simplified. Now uses the new mpn_hgcd
+	interface.
+
+	* mpn/generic/hgcd.c (mpn_hgcd_addmul2_n): Renamed from addmul2_n
+	and made non-static. Changed interface to take non-normalized
+	inputs, and only two size arguments.
+	(mpn_hgcd_matrix_mul): Simplified using new mpn_hgcd_addmul2_n.
+
+	* mpn/generic/gcdext_lehmer.c (mpn_gcdext_lehmer_itch): Deleted
+	function.
+	(mpn_gcdext_lehmer_n): Renamed from mpn_gcd_lehmer. Now takes
+	inputs of equal size. Moved the code for the division step to a
+	separate function...
+	* mpn/generic/gcdext_subdiv_step.c (mpn_gcdext_subdiv_step): New
+	file, new function.
+
+	* configure.in (gmp_mpn_functions): Added gcdext_subdiv_step.
+
 2008-09-10  Torbjorn Granlund  <tege@swox.com>
 
 	* gmp-h.in: Unconditionally include <cstdio>.
 
+2008-09-10  Niels Möller  <nisse@lysator.liu.se>
+
+	* tune/common.c: #if:ed out speed_mpn_gcd_binary and
+	speed_mpn_gcd_accel.
+	* tune/speed.c (routine): #if:ed out mpn_gcd_binary, mpn_gcd_accel
+	and find_a.
+	* tune/Makefile.am (libspeed_la_SOURCES): Removed gcd_bin.c
+	gcd_accel.c gcd_finda_gen.c.
+	* tune/tuneup.c: Enable tuning of GCD_DC_THRESHOLD.
+
+	* mpn/generic/gcd.c (mpn_gcd): Rewrote and simplified. Now uses
+	the new mpn_hgcd interface.
+
+	* */gmp-mparam.h: Renamed GCD_SCHOENHAGE_THRESHOLD to
+	GCD_DC_THRESHOLD.
+
+	* mpn/generic/gcd_lehmer.c (mpn_gcd_lehmer_n): Renamed (was
+	mpn_gcd_lehmer). Now takes inputs of equal size.
+
+	* mpn/generic/gcd_lehmer.c (mpn_gcd_lehmer): Reintroduced gcd_2,
+	to get better performance for small inputs.
+
+	* mpn/generic/hgcd.c: Don't hardcode small HGCD_THRESHOLD.
+	* mpn/x86_64/gmp-mparam.h (HGCD_THRESHOLD): Reduced from 145 to
+	120.
+	* */gmp-mparam.h: Renamed HGCD_SCHOENHAGE_THRESHOLD to
+	HGCD_THRESHOLD.
+
 2008-09-09  Torbjorn Granlund  <tege@swox.com>
 
 	* doc/gmp.texi: Fix a typo and clarify mpn_gcdext docs.
+
+2008-09-09  Niels Möller  <nisse@lysator.liu.se>
+
+	* tune/common.c (speed_mpn_hgcd, speed_mpn_hgcd_lehmer): Adapted
+	to new hgcd interface.
+
+	* gmp-impl.h (MPN_HGCD_LEHMER_ITCH): New macro.
+
+	* hgcd.c (mpn_hgcd_lehmer): Renamed function, from hgcd_base. Made
+	non-static.
+
+	* gcd_lehmer.c (mpn_gcd_lehmer): Use hgcd2 also for n == 2.
+
+	* gcdext_lehmer.c (mpn_gcdext_lehmer): Simplified code for
+	division step. Added proper book-keeping of swaps, which affect
+	the sign of the returned cofactor.
+
+	* tests/mpz/t-gcd.c (one_test): Display co-factor when mpn_gcdext
+	fails.
+
+	* gcd_lehmer.c (mpn_gcd_lehmer): At end of loop, need to handle
+	the special case n == 1 correctly.
+
+	* gcd_subdiv_step.c (mpn_gcd_subdiv_step): Simplified function.
+	The special cancellation logic is not needed here.
 
 2008-09-08  Torbjorn Granlund  <tege@swox.com>
 
@@ -93,6 +286,26 @@
 
 	* gmp-h.in (__GMP_CC): New #define.
 	(__GMP_CFLAGS): New #define.
+
+2008-09-08  Niels Möller  <nisse@lysator.liu.se>
+
+	* tests/mpn/t-hgcd.c: Updated tests. Rewrite of hgcd_ref.
+
+	* mpn/generic/gcdext_lehmer.c (mpn_gcdext_lehmer_itch): New function.
+	(mpn_gcdext_lehmer): Various bugfixes.
+
+	* gcdext.c (mpn_gcdext): Allocate scratch space for gcdext_lehmer.
+
+	* mpn/generic/gcd_lehmer.c (gcd_2): ASSERT that inputs are odd.
+	(mpn_gcd_lehmer): Added tp argument, for scratch space. Make both
+	arguments odd before calling gcd_2.
+
+	* mpn/generic/hgcd.c (mpn_hgcd): Allow the trivial case n <= 2,
+	and return 0 immediately.
+
+	* gmp-impl.h (MPN_EXTRACT_NUMB): New macro.
+
+	* configure.in (gmp_mpn_functions): Added gcdext_lehmer.
 
 2008-09-05  Torbjorn Granlund  <tege@swox.com>
 
@@ -856,6 +1069,12 @@
 	* mpn/generic/mul_fft.c: Optimize many scalar divisions and mod
 	operations into masks and shifts.
 	(mpn_fft_mul_modF_K): Fix a spurious ASSERT_NOCARRY.
+	(mpn_fft_belge_butterfly, mpn_fft_fft_belgeRec, mpn_fft_fft_belge,
+	mpn_fft_fft_belgeInvRec, mpn_fft_fft_belgeInv): Add Pierrick Gaudry's
+	implementation of the cache-optimized "belge" FFT code.
+	(mpn_fft_fft_sqr, mpn_fft_butterfly, mpn_fft_fft, mpn_fft_fftinv):
+	Remove.
+	(mpn_mul_fft_internal): Corresponding updates.
 
 2006-03-26  Torbjorn Granlund  <tege@swox.com>
 
@@ -1186,6 +1405,9 @@
 	* mpz/root.c: Likewise.
 
 	* tests/mpz/reuse.c: Test mpz_rootrem.
+
+	From Paul Zimmermann:
+	* mpn/generic/rootrem.c: Complete rewrite.
 
 2005-10-31  Torbjorn Granlund  <tege@swox.com>
 

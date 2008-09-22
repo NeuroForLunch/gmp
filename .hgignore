@@ -37,9 +37,9 @@ Makefile
 ^doc/version\.texi
 
 # All source files in mpn/ are either generated, or links
-^mpn/.*\.c
-^mpn/.*\.asm
-^
+^mpn/[^/]*\.c
+^mpn/[^/]*\.asm
+
 ^\.libs
 
 .*\.a
