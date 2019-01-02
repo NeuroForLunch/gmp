@@ -130,13 +130,13 @@ see https://www.gnu.org/licenses/.  */
 #define gmp_umul_ppmm(w1, w0, u, v)					\
   do {									\
     int LOCAL_GMP_LIMB_BITS = GMP_LIMB_BITS;				\
-    if (sizeof (unsigned int) >= 2 * sizeof (mp_limb_t))		\
+    if (sizeof(unsigned int) * CHAR_BIT >= 2 * GMP_LIMB_BITS)		\
       {									\
 	unsigned int __ww = (unsigned int) (u) * (v);			\
 	w0 = (mp_limb_t) __ww;						\
 	w1 = (mp_limb_t) (__ww >> LOCAL_GMP_LIMB_BITS);			\
       }									\
-    else if (sizeof (unsigned long int) >= 2 * sizeof (mp_limb_t))	\
+    else if (GMP_ULONG_BITS >= 2 * GMP_LIMB_BITS)			\
       {									\
 	unsigned long int __ww = (unsigned long int) (u) * (v);		\
 	w0 = (mp_limb_t) __ww;						\
@@ -1550,8 +1550,8 @@ mpz_init_set (mpz_t r, const mpz_t x)
 int
 mpz_fits_slong_p (const mpz_t u)
 {
-    return (LONG_MAX + LONG_MIN == 0 || mpz_cmp_ui (u, LONG_MAX) <= 0) &&
-      mpz_cmpabs_ui (u, GMP_NEG_CAST (unsigned long int, LONG_MIN)) <= 0;
+  return (LONG_MAX + LONG_MIN == 0 || mpz_cmp_ui (u, LONG_MAX) <= 0) &&
+    mpz_cmpabs_ui (u, GMP_NEG_CAST (unsigned long int, LONG_MIN)) <= 0;
 }
 
 static int
@@ -1571,7 +1571,7 @@ mpz_fits_ulong_p (const mpz_t u)
 {
   mp_size_t us = u->_mp_size;
 
-    return us >= 0 && mpn_absfits_ulong_p (u->_mp_d, us);
+  return us >= 0 && mpn_absfits_ulong_p (u->_mp_d, us);
 }
 
 long int
@@ -3400,11 +3400,8 @@ gmp_lucas_step_k_2k (mpz_t V, mpz_t Qk, const mpz_t n)
 /* with P=1, Q=Q; k = (n>>b0)|1. */
 /* Requires an odd n > 4; b0 > 0; -2*Q must not overflow a long */
 /* Returns (U_k == 0) and sets V=V_k and Qk=Q^k. */
-#ifndef __MINI_GMP_TESTING
-static
-#endif
-int
-mpz_lucas_mod (mpz_t V, mpz_t Qk, long Q,
+static int
+gmp_lucas_mod (mpz_t V, mpz_t Qk, long Q,
 	       mp_bitcnt_t b0, const mpz_t n)
 {
   mp_bitcnt_t bs;
@@ -3504,7 +3501,7 @@ gmp_stronglucas (const mpz_t x, mpz_t Qk)
   /* D= P^2 - 4Q; P = 1; Q = (1-D)/4 */
   Q = (D & 2) ? (D >> 2) + 1 : -(long) (D >> 2);
 
-  if (! mpz_lucas_mod (V, Qk, Q, b0, n))	/* If Ud != 0 */
+  if (! gmp_lucas_mod (V, Qk, Q, b0, n))	/* If Ud != 0 */
     while (V->_mp_size != 0 && --b0 != 0)	/* while Vk != 0 */
       /* V <- V ^ 2 - 2Q^k */
       /* Q^{2k} = (Q^k)^2 */
