@@ -80,12 +80,12 @@ PROLOGUE(mpn_gcd_11)
 	ALIGN(16)		C
 L(top):	rep;bsf	v0, %rcx	C tzcnt!
 	mov	u0, %r9		C
-	sub	%rax, u0	C
+	sub	%rax, u0	C u - v
 	cmovc	v0, u0		C u = |u - v|
 	cmovc	%r9, %rax	C v = min(u,v)
 	shr	R8(%rcx), u0	C
 	mov	%rax, v0	C
-	sub	u0, v0		C
+	sub	u0, v0		C v - u
 	jnz	L(top)		C
 
 L(end):	FUNC_EXIT()

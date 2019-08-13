@@ -5,6 +5,16 @@
    reps is the number of internal passes of the probabilistic algorithm.  Knuth
    indicates that 25 passes are reasonable.
 
+   With the current implementation, the first 24 MR-tests are substituted by a
+   Baillie-PSW probable prime test.
+
+   This implementation the Baillie-PSW test was checked up to 37*2^45,
+   for smaller values no MR-test is performed, regardless of reps, and
+   2 ("surely prime") is returned if the number was not proved composite.
+
+   If GMP_BPSW_NOFALSEPOSITIVES_UPTO_64BITS is defined as non-zero,
+   the code assumes that the Baillie-PSW test was checked up to 2^64.
+
    THE FUNCTIONS IN THIS FILE ARE FOR INTERNAL USE ONLY.  THEY'RE ALMOST
    CERTAIN TO BE SUBJECT TO INCOMPATIBLE CHANGES OR DISAPPEAR COMPLETELY IN
    FUTURE GNU MP RELEASES.
@@ -42,6 +52,10 @@ see https://www.gnu.org/licenses/.  */
 
 #include "gmp-impl.h"
 
+#ifndef GMP_BPSW_NOFALSEPOSITIVES_UPTO_64BITS
+#define GMP_BPSW_NOFALSEPOSITIVES_UPTO_64BITS 0
+#endif
+
 static int millerrabin (mpz_srcptr,
 			mpz_ptr, mpz_ptr,
 			mpz_srcptr, unsigned long int);
@@ -56,6 +70,7 @@ mpz_millerrabin (mpz_srcptr n, int reps)
   TMP_DECL;
   TMP_MARK;
 
+  ASSERT (SIZ (n) > 0);
   MPZ_TMP_INIT (nm, SIZ (n) + 1);
   mpz_tdiv_q_2exp (nm, n, 1);
 
@@ -72,27 +87,80 @@ mpz_millerrabin (mpz_srcptr n, int reps)
   mpz_set_ui (x, 2);
   is_prime = millerrabin (n, x, y, q, k) && mpz_stronglucas (n, x, y);
 
-  reps -= 24;
-  if (reps > 0 && is_prime)
+  if (is_prime)
     {
-      /* (n-5)/2 */
-      mpz_sub_ui (nm, nm, 2L);
-      ASSERT (mpz_cmp_ui (nm, 1L) >= 0);
+      if (
+#if GMP_BPSW_NOFALSEPOSITIVES_UPTO_64BITS
+	  /* Consider numbers up to 2^64 that pass the BPSW test as primes. */
+#if GMP_NUMB_BITS <= 64
+	  SIZ (n) <= 64 / GMP_NUMB_BITS
+#else
+	  0
+#endif
+#if 64 % GMP_NUMB_BITS != 0
+	  || SIZ (n) - 64 / GMP_NUMB_BITS == (PTR (n) [64 / GMP_NUMB_BITS] < CNST_LIMB(1) << 64 % GMP_NUMB_BITS)
+#endif
+#else
+	  /* Consider numbers up to 37*2^45 that pass the BPSW test as primes.
+	     This implementation was tested up to 37*2^45 = 2^50+2^47+2^45 */
+	  /* 2^5 < 37 = 0b100101 < 2^6 */
+#define GMP_BPSW_LIMB_CONST CNST_LIMB(37)
+#define GMP_BPSW_BITS_CONST (LOG2C(37) - 1)
+#define GMP_BPSW_BITS_LIMIT (45 + GMP_BPSW_BITS_CONST)
 
-      gmp_randinit_default (rstate);
+#define GMP_BPSW_LIMBS_LIMIT (GMP_BPSW_BITS_LIMIT / GMP_NUMB_BITS)
+#define GMP_BPSW_BITS_MOD (GMP_BPSW_BITS_LIMIT % GMP_NUMB_BITS)
 
-      do
+#if GMP_NUMB_BITS <=  GMP_BPSW_BITS_LIMIT
+	  SIZ (n) <= GMP_BPSW_LIMBS_LIMIT
+#else
+	  0
+#endif
+#if GMP_BPSW_BITS_MOD >=  GMP_BPSW_BITS_CONST
+	  || SIZ (n) - GMP_BPSW_LIMBS_LIMIT == (PTR (n) [GMP_BPSW_LIMBS_LIMIT] < GMP_BPSW_LIMB_CONST << (GMP_BPSW_BITS_MOD - GMP_BPSW_BITS_CONST))
+#else
+#if GMP_BPSW_BITS_MOD != 0
+	  || SIZ (n) - GMP_BPSW_LIMBS_LIMIT == (PTR (n) [GMP_BPSW_LIMBS_LIMIT] < GMP_BPSW_LIMB_CONST >> (GMP_BPSW_BITS_CONST -  GMP_BPSW_BITS_MOD))
+#else
+#if GMP_NUMB_BITS > GMP_BPSW_BITS_CONST
+	  || SIZ (nm) - GMP_BPSW_LIMBS_LIMIT + 1 == (PTR (nm) [GMP_BPSW_LIMBS_LIMIT - 1] < GMP_BPSW_LIMB_CONST << (GMP_NUMB_BITS - 1 - GMP_BPSW_BITS_CONST))
+#endif
+#endif
+#endif
+
+#undef GMP_BPSW_BITS_LIMIT
+#undef GMP_BPSW_LIMB_CONST
+#undef GMP_BPSW_BITS_CONST
+#undef GMP_BPSW_LIMBS_LIMIT
+#undef GMP_BPSW_BITS_MOD
+
+#endif
+	  )
+	is_prime = 2;
+      else
 	{
-	  /* 3 to (n-1)/2 inclusive, don't want 1, 0 or 2 */
-	  mpz_urandomm (x, rstate, nm);
-	  mpz_add_ui (x, x, 3L);
+	  reps -= 24;
+	  if (reps > 0)
+	    {
+	      /* (n-5)/2 */
+	      mpz_sub_ui (nm, nm, 2L);
+	      ASSERT (mpz_cmp_ui (nm, 1L) >= 0);
 
-	  is_prime = millerrabin (n, x, y, q, k);
-	} while (--reps > 0 && is_prime);
+	      gmp_randinit_default (rstate);
 
-      gmp_randclear (rstate);
+	      do
+		{
+		  /* 3 to (n-1)/2 inclusive, don't want 1, 0 or 2 */
+		  mpz_urandomm (x, rstate, nm);
+		  mpz_add_ui (x, x, 3L);
+
+		  is_prime = millerrabin (n, x, y, q, k);
+		} while (--reps > 0 && is_prime);
+
+	      gmp_randclear (rstate);
+	    }
+	}
     }
-
   TMP_FREE;
   return is_prime;
 }
