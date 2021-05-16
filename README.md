@@ -1,37 +1,4 @@
-Copyright 1991, 1996, 1999, 2000, 2007 Free Software Foundation, Inc.
-
-This file is part of the GNU MP Library.
-
-The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of either:
-
-  * the GNU Lesser General Public License as published by the Free
-    Software Foundation; either version 3 of the License, or (at your
-    option) any later version.
-
-or
-
-  * the GNU General Public License as published by the Free Software
-    Foundation; either version 2 of the License, or (at your option) any
-    later version.
-
-or both in parallel, as here.
-
-The GNU MP Library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
-
-You should have received copies of the GNU General Public License and the
-GNU Lesser General Public License along with the GNU MP Library.  If not,
-see https://www.gnu.org/licenses/.
-
-
-
-
-
-
-			THE GNU MP LIBRARY
+# The GNU MP Library
 
 
 GNU MP is a library for arbitrary precision arithmetic, operating on signed
@@ -54,7 +21,8 @@ which components of GNU MP).
 
 
 
-			OVERVIEW OF GNU MP
+
+# Overview of GNU MP
 
 There are four classes of functions in GNU MP.
 
@@ -89,7 +57,7 @@ the INSTALL file in this directory.
 
 
 
-			REPORTING BUGS
+### Reporting Bugs
 
 If you find a bug in the library, please make sure to tell us about it!
 
@@ -103,9 +71,32 @@ modifications and enhancements.
 
 
 
+### License
 
-----------------
-Local variables:
-mode: text
-fill-column: 78
-End:
+Copyright 1991, 1996, 1999, 2000, 2007 Free Software Foundation, Inc.
+
+This file is part of the GNU MP Library.
+
+The GNU MP Library is free software; you can redistribute it and/or modify
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
+
+The GNU MP Library is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.
