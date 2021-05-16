@@ -15,28 +15,24 @@ GNU MP is believed to be faster than any other similar library.  Its advantage
 increases with operand sizes for certain operations, since GNU MP in many
 cases has asymptotically faster algorithms.
 
-GNU MP is free software and may be freely copied on the terms contained in the
-files COPYING* (see the manual for information on which license(s) applies to
-which components of GNU MP).
 
 
 
-
-# Overview of GNU MP
+## Overview of GNU MP
 
 There are four classes of functions in GNU MP.
 
  1. Signed integer arithmetic functions (mpz).  These functions are intended
     to be easy to use, with their regular interface.  The associated type is
-    `mpz_t'.
+    `mpz_t`.
 
  2. Rational arithmetic functions (mpq).  For now, just a small set of
     functions necessary for basic rational arithmetics.  The associated type
-    is `mpq_t'.
+    is `mpq_t`.
 
- 3. Floating-point arithmetic functions (mpf).  If the C type `double'
+ 3. Floating-point arithmetic functions (mpf).  If the C type `double`
     doesn't give enough precision for your application, declare your
-    variables as `mpf_t' instead, set the precision to any number desired,
+    variables as `mpf_t` instead, set the precision to any number desired,
     and call the functions in the mpf class for the arithmetic operations.
 
  4. Positive-integer, hard-to-use, very low overhead functions are in the
@@ -57,7 +53,7 @@ the INSTALL file in this directory.
 
 
 
-### Reporting Bugs
+## Reporting Bugs
 
 If you find a bug in the library, please make sure to tell us about it!
 
@@ -71,7 +67,11 @@ modifications and enhancements.
 
 
 
-### License
+## License
+
+GNU MP is free software and may be freely copied on the terms contained in the
+files COPYING* (see the manual for information on which license(s) applies to
+which components of GNU MP).
 
 Copyright 1991, 1996, 1999, 2000, 2007 Free Software Foundation, Inc.
 
